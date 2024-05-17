@@ -9,7 +9,7 @@ services:
       - POSTGRES_SERVER=${POSTGRES_SERVER}
       - POSTGRES_PORT=${POSTGRES_PORT}
     ports:
-      - "8000:5000"
+      - "8000:8000"
     depends_on:
       - db
         #condition: service_healthy
@@ -22,9 +22,16 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_SERVER: ${POSTGRES_SERVER}
       POSTGRES_PORT: ${POSTGRES_PORT}
+    volumes: 
+      #- ./db.sql:/docker-entrypoint-initdb.d/db.sql
+      - ./pgdata:/var/lib/postgresql/data
+    expose:
+      - 5432
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -q -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
+volumes:
+  pgdata:

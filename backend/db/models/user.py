@@ -3,6 +3,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from db.base_class import Base
 
 class User(Base):
+    __tablename__ = "user_data"
+    
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(unique=True, index=True)
     password: Mapped[str]

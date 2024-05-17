@@ -2,8 +2,10 @@ FROM python:3.10-alpine
 
 WORKDIR /code
 
-COPY . /code/
+COPY ./requirements.txt /code/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-CMD ["uvicorn", "main:app", "--reload", "--port", "5000"]
+COPY . /code/
+
+CMD ["fastapi", "run", "main.py", "--port", "8000"]

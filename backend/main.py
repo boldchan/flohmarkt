@@ -1,6 +1,4 @@
-from fastapi import FastAPI
 from factory import create_app
-from core.config import settings
 from db.session import engine
 from db.base import Base
 
