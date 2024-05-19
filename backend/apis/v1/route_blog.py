@@ -1,32 +1,57 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from typing import Annotated
 
-from db.repository.blog import create_new_blog, retreive_blog, retreive_all_blogs, update_blog, delete_blog
+from apis.v1.route_login import get_current_user
+from db.models.user import User
+from db.repository.blog import create_new_blog
+from db.repository.blog import delete_blog
+from db.repository.blog import retreive_all_blogs
+from db.repository.blog import retreive_blog
+from db.repository.blog import update_blog
 from db.session import get_db
-from schemas.blog import BlogCreate, BlogShow, BlogUpdate
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import status
+from schemas.blog import BlogCreate
+from schemas.blog import BlogShow
+from schemas.blog import BlogUpdate
+from sqlalchemy.orm import Session
 
 
 router = APIRouter()
 
+
 @router.post("/", response_model=BlogShow, status_code=status.HTTP_201_CREATED)
-def create_blog(blog: BlogCreate, db: Session = Depends(get_db)):
-    blog = create_new_blog(blog=blog, db=db)
+def create_blog(
+    blog: BlogCreate,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    blog = create_new_blog(blog=blog, db=db, author_id=current_user.id)
     return blog
 
+
 @router.get("/{id}", response_model=BlogShow)
-def get_blog(id:int, db: Session = Depends(get_db)):
+def get_blog(id: int, db: Session = Depends(get_db)):
     blog = retreive_blog(id=id, db=db)
     if not blog:
         raise HTTPException(
-            detail=f"Blog with ID {id} does not exist.", 
-            status_code=status.HTTP_404_NOT_FOUND
+            detail=f"Blog with ID {id} does not exist.",
+            status_code=status.HTTP_404_NOT_FOUND,
         )
     return blog
 
+
 @router.put("/{id}", response_model=BlogShow)
-def update_a_blog(id: int, blog: BlogUpdate, db: Session = Depends(get_db)):
-    blog = update_blog(id=id, blog=blog, db=db)
+def update_a_blog(
+    id: int,
+    blog: BlogUpdate,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    blog = update_blog(id=id, blog=blog, db=db, author_id=current_user.id)
     return blog
+
 
 @router.get("/", response_model=list[BlogShow])
 def get_all_blogs(db: Session = Depends(get_db)):
@@ -35,9 +60,16 @@ def get_all_blogs(db: Session = Depends(get_db)):
         raise HTTPException(detail="No blogs", status_code=status.HTTP_204_NO_CONTENT)
     return blogs
 
+
 @router.delete("/{id}")
-def delete_a_blog(id: int, db: Session = Depends(get_db)):
-    message = delete_blog(id=id, db=db)
+def delete_a_blog(
+    id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    message = delete_blog(id=id, db=db, author_id=current_user.id)
     if message.get("error"):
-        raise HTTPException(detail=message.get("error"), status_code= status.HTTP_400_BAD_REQUEST)
-    return {"msg":f"Successfully deleted blog with id {id}"}
+        raise HTTPException(
+            detail=message.get("error"), status_code=status.HTTP_400_BAD_REQUEST
+        )
+    return {"msg": f"Successfully deleted blog with id {id}"}
